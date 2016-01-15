@@ -60,7 +60,7 @@ static char tstr[] = " [|RESP]";
 #define resp_print_null(ndo)       ND_PRINT((ndo, " null"))
 #define resp_print_invalid(ndo)    ND_PRINT((ndo, " invalid"))
 
-void       resp_print(netdissect_options *, register const u_char *, int);
+void       resp_print(netdissect_options *, const u_char *, u_int);
 static int resp_parse(netdissect_options *, register const u_char *, int);
 static int resp_print_string_error_integer(netdissect_options *, register const u_char *, int);
 static int resp_print_simple_string(netdissect_options *, register const u_char *, int);
@@ -136,7 +136,7 @@ static int resp_print_inline(netdissect_options *, register const u_char *, int)
     if (rl < 0) { goto trunc; }
 
 void
-resp_print(netdissect_options *ndo, register const u_char *bp, int length)
+resp_print(netdissect_options *ndo, const u_char *bp, u_int length)
 {
     int ret_len = 0, length_cur = length;
 

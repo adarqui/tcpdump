@@ -470,7 +470,6 @@ extern int esp_print(netdissect_options *, const u_char *, const int, const u_ch
 extern u_int ether_print(netdissect_options *, const u_char *, u_int, u_int, void (*)(netdissect_options *, const u_char *), const u_char *);
 extern int ethertype_print(netdissect_options *, u_short, const u_char *, u_int, u_int);
 extern u_int fddi_print(netdissect_options *, const u_char *, u_int, u_int);
-extern void resp_print(netdissect_options *, register const u_char *, int);
 extern void forces_print(netdissect_options *, const u_char *, u_int);
 extern u_int fr_print(netdissect_options *, register const u_char *, u_int);
 extern int frag6_print(netdissect_options *, const u_char *, const u_char *);
@@ -551,6 +550,7 @@ extern int print_unknown_data(netdissect_options *, const u_char *, const char *
 extern char *q922_string(netdissect_options *, const u_char *, u_int);
 extern void q933_print(netdissect_options *, const u_char *, u_int);
 extern void radius_print(netdissect_options *, const u_char *, u_int);
+extern void resp_print(netdissect_options *, const u_char *, u_int);
 extern void rip_print(netdissect_options *, const u_char *, u_int);
 extern void ripng_print(netdissect_options *, const u_char *, unsigned int);
 extern void rpki_rtr_print(netdissect_options *, const u_char *, u_int);
