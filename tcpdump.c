@@ -1117,7 +1117,7 @@ main(int argc, char **argv)
 			else if (ascii_strcasecmp(optarg, "lmp") == 0)
 				ndo->ndo_packettype = PT_LMP;
             else if (strcasecmp(optarg, "resp") == 0)
-                packettype = PT_RESP;
+                ndo->ndo_packettype = PT_RESP;
 			else
 				error("unknown packet type `%s'", optarg);
 			break;

@@ -641,8 +641,8 @@ tcp_print(netdissect_options *ndo,
                 case PT_ZMTP1:
                         zmtp1_print(ndo, bp, length);
                         break;
-                case PT_REDIS:
-                        redis_print(ndo, bp, length);
+                case PT_RESP:
+                        resp_print(ndo, bp, length);
                         break;
                 }
                 return;

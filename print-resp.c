@@ -35,7 +35,8 @@
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
+#include "netdissect.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -72,7 +73,7 @@ static int resp_print_inline(netdissect_options *, register const u_char *, int)
 /*
  * MOVE_FORWARD:
  * Attempts to move our 'ptr' forward until a \r\n is found,
- * while also making sure we don't exceed the buffer 'len.
+ * while also making sure we don't exceed the buffer 'len'.
  * If we exceed, jump to trunc.
  */
 #define MOVE_FORWARD(ptr, len) \
@@ -119,34 +120,31 @@ static int resp_print_inline(netdissect_options *, register const u_char *, int)
 #define INC2(ptr, len) INCBY(ptr, 2, len)
 
 /*
- * TESTRL
+ * TEST_RET_LEN
  * If ret_len is < 0, jump to the trunc tag which returns (-1)
  * and 'bubbles up' to printing tstr. Otherwise, return ret_len.
  */
-#define TESTRL(rl) \
+#define TEST_RET_LEN(rl) \
     if (rl < 0) { goto trunc; } else { return rl; }
 
 /*
- * TESTRLVOID
- * Similar to TESTRL.
- * Used to simply return in a void function.
+ * TEST_RET_LEN_NORETURN
+ * If ret_len is < 0, jump to the trunc tag which returns (-1)
+ * and 'bubbles up' to printing tstr. Otherwise, continue onward.
  */
-#define TESTRLVOID(rl) \
-    if (rl < 0) { goto trunc; } else { return; }
-
-#define TESTRLVOID_NORETURN(rl) \
+#define TEST_RET_LEN_NORETURN(rl) \
     if (rl < 0) { goto trunc; }
 
 void
 resp_print(netdissect_options *ndo, register const u_char *bp, int length)
 {
-    int ret_len = 0, ret_len_accum = 0;
+    int ret_len = 0, length_cur = length;
 
     if(!bp || length <= 0)
         return;
 
     ND_PRINT((ndo, ": RESP"));
-    do {
+    while (length_cur > 0) {
         /*
          * This block supports redis pipelining.
          * For example, multiple operations can be pipelined within the same string:
@@ -156,10 +154,11 @@ resp_print(netdissect_options *ndo, register const u_char *bp, int length)
          * In order to handle this case, we must try and parse 'bp' until
          * 'length' bytes have been processed or we reach a trunc condition.
          */
-        ret_len = resp_parse(ndo, bp + ret_len_accum, length - ret_len_accum);
-        TESTRLVOID_NORETURN(ret_len);
-        ret_len_accum += ret_len;
-    } while (ret_len > 0 && ret_len_accum < length);
+        ret_len = resp_parse(ndo, bp, length_cur);
+        TEST_RET_LEN_NORETURN(ret_len);
+        bp += ret_len;
+        length_cur -= ret_len;
+    }
 
     return;
 
@@ -184,7 +183,7 @@ resp_parse(netdissect_options *ndo, register const u_char *bp, int length)
         default:                        ret_len = resp_print_inline(ndo, bp, length);          break;
     }
 
-    TESTRL(ret_len);
+    TEST_RET_LEN(ret_len);
 
 trunc:
     return (-1);
@@ -208,7 +207,7 @@ resp_print_error(netdissect_options *ndo, register const u_char *bp, int length)
 static int
 resp_print_string_error_integer(netdissect_options *ndo, register const u_char *bp, int length) {
     int length_cur = length, len, ret_len = 0;
-    u_char *bp_ptr = (u_char *)bp;
+    const u_char *bp_ptr = bp;
 
     /*
      * MOVE_FORWARD moves past the string that follows the (+-;) opcodes
@@ -222,7 +221,7 @@ resp_print_string_error_integer(netdissect_options *ndo, register const u_char *
     ND_PRINT((ndo, " \"%.*s\"", len-1, bp+1));
     ret_len = len /*<1byte>+<string>*/ + 2 /*<CRLF>*/;
 
-    TESTRL(ret_len);
+    TEST_RET_LEN(ret_len);
 
 trunc:
     return (-1);
@@ -234,17 +233,17 @@ resp_print_bulk_string(netdissect_options *ndo, register const u_char *bp, int l
 
     ND_TCHECK(*bp);
 
-    // '$'
+    /* opcode: '$' */
     INC1(bp, length_cur);
     ND_TCHECK(*bp);
 
-    // <length>
-    string_len = atoi((char *)bp);
+    /* <length> */
+    string_len = atoi((const char *)bp);
 
-    // move to \r\n
+    /* move to \r\n */
     MOVE_FORWARD(bp, length_cur);
 
-    // \r\n
+    /* \r\n */
     INC2(bp, length_cur);
 
     if (string_len > 0) {
@@ -257,20 +256,20 @@ resp_print_bulk_string(netdissect_options *ndo, register const u_char *bp, int l
             case (-1): {
                 /* This is the NULL response. It follows a different pattern: $-1\r\n */
                 resp_print_null(ndo);
-                TESTRL(length - length_cur);
-                // returned ret_len or jumped to trunc
+                TEST_RET_LEN(length - length_cur);
+                /* returned ret_len or jumped to trunc */
             }
             default: resp_print_invalid(ndo); break;
         }
     }
 
-    // <string>
+    /* <string> */
     INCBY(bp, string_len, length_cur);
 
-    // \r\n
+    /* \r\n */
     INC2(bp, length_cur);
 
-    TESTRL(length - length_cur);
+    TEST_RET_LEN(length - length_cur);
 
 trunc:
     return (-1);
@@ -282,26 +281,30 @@ resp_print_bulk_array(netdissect_options *ndo, register const u_char *bp, int le
 
     ND_TCHECK(*bp);
 
-    // '*'
+    /* opcode: '*' */
     INC1(bp, length_cur);
     ND_TCHECK(*bp);
 
-    // <array_length>
-    array_len = atoi((char *)bp);
+    /* <array_length> */
+    array_len = atoi((const char *)bp);
 
-    // move to \r\n
+    /* move to \r\n */
     MOVE_FORWARD(bp, length_cur);
 
-    // \r\n
+    /* \r\n */
     INC2(bp, length_cur);
 
     if (array_len > 0) {
         /* non empty array */
         for (i = 0; i < array_len; i++) {
-            ret_len = resp_parse(ndo, bp + ret_len, length_cur - ret_len) + ret_len;
-            if (ret_len < 0) {
-                goto trunc;
-            }
+            ret_len = resp_parse(ndo, bp, length_cur);
+
+            TEST_RET_LEN_NORETURN(ret_len);
+
+            bp += ret_len;
+            length_cur -= ret_len;
+
+            TEST_RET_LEN_NORETURN(length - length_cur);
         }
     } else {
         /* empty or invalid */
@@ -312,9 +315,7 @@ resp_print_bulk_array(netdissect_options *ndo, register const u_char *bp, int le
         }
     }
 
-    ret_len += (length - length_cur);
-
-    TESTRL(ret_len);
+    TEST_RET_LEN(length - length_cur);
 
 trunc:
     return (-1);
@@ -323,7 +324,7 @@ trunc:
 static int
 resp_print_inline(netdissect_options *ndo, register const u_char *bp, int length) {
     int length_cur = length, len;
-    u_char *bp_ptr;
+    const u_char *bp_ptr;
 
     /*
      * Inline commands are simply 'strings' followed by \r or \n or both.
@@ -334,14 +335,14 @@ resp_print_inline(netdissect_options *ndo, register const u_char *bp, int length
      * <string><\r||\n||\r\n...>
      */
     CONSUME_CR_OR_LF(bp, length_cur);
-    bp_ptr = (u_char *)bp;
+    bp_ptr = bp;
     MOVE_FORWARD_CR_OR_LF(bp_ptr, length_cur);
     len = (bp_ptr - bp);
     ND_TCHECK2(*bp, len);
     ND_PRINT((ndo, " \"%.*s\"", len, bp));
     CONSUME_CR_OR_LF(bp_ptr, length_cur);
 
-    TESTRL(length - length_cur);
+    TEST_RET_LEN(length - length_cur);
 
 trunc:
     resp_print_invalid(ndo);
