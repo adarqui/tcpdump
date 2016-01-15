@@ -44,7 +44,7 @@
 #include "interface.h"
 #include "extract.h"
 
-static char tstr[] = " [|RESP]";
+static const char tstr[] = " [|RESP]";
 
 /*
  * For information regarding RESP, see: http://redis.io/topics/protocol
@@ -307,7 +307,7 @@ resp_print_bulk_array(netdissect_options *ndo, register const u_char *bp, int le
             TEST_RET_LEN_NORETURN(length - length_cur);
         }
     } else {
-        /* empty or invalid */
+        /* empty, null, or invalid */
         switch(array_len) {
             case 0:     resp_print_empty(ndo);   break;
             case (-1):  resp_print_null(ndo);    break;
