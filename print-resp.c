@@ -339,7 +339,9 @@ resp_print_inline(netdissect_options *ndo, register const u_char *bp, int length
     MOVE_FORWARD_CR_OR_LF(bp_ptr, length_cur);
     len = (bp_ptr - bp);
     ND_TCHECK2(*bp, len);
-    ND_PRINT((ndo, " \"%.*s\"", len, bp));
+    ND_PRINT((ndo, " \""));
+    fn_printn(ndo, bp, len, ndo->ndo_snapend);
+    fn_print_char(ndo, '"');
     CONSUME_CR_OR_LF(bp_ptr, length_cur);
 
     TEST_RET_LEN(length - length_cur);
