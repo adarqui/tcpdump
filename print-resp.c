@@ -41,7 +41,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "interface.h"
 #include "extract.h"
 
 static const char tstr[] = " [|RESP]";
