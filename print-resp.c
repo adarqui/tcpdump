@@ -336,7 +336,7 @@ resp_print_inline(netdissect_options *ndo, register const u_char *bp, int length
 
     /*
      * Inline commands are simply 'strings' followed by \r or \n or both.
-     * Redis will do it's best to split/parse these string.
+     * Redis will do it's best to split/parse these strings.
      * This feature of redis is implemented to support the ability of
      * command parsing from telnet/nc sessions etc.
      *
