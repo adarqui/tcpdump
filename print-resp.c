@@ -49,11 +49,11 @@ static const char tstr[] = " [|RESP]";
  * For information regarding RESP, see: http://redis.io/topics/protocol
  */
 
-#define REDIS_RESP_SIMPLE_STRING    '+'
-#define REDIS_RESP_ERROR            '-'
-#define REDIS_RESP_INTEGER          ':'
-#define REDIS_RESP_BULK_STRING      '$'
-#define REDIS_RESP_ARRAY            '*'
+#define RESP_SIMPLE_STRING    '+'
+#define RESP_ERROR            '-'
+#define RESP_INTEGER          ':'
+#define RESP_BULK_STRING      '$'
+#define RESP_ARRAY            '*'
 
 #define resp_print_empty(ndo)      ND_PRINT((ndo, " empty"))
 #define resp_print_null(ndo)       ND_PRINT((ndo, " null"))
@@ -174,12 +174,12 @@ resp_parse(netdissect_options *ndo, register const u_char *bp, int length)
     ND_TCHECK(*bp);
 
     switch(op) {
-        case REDIS_RESP_SIMPLE_STRING:  ret_len = resp_print_simple_string(ndo, bp, length);   break;
-        case REDIS_RESP_INTEGER:        ret_len = resp_print_integer(ndo, bp, length);         break;
-        case REDIS_RESP_ERROR:          ret_len = resp_print_error(ndo, bp, length);           break;
-        case REDIS_RESP_BULK_STRING:    ret_len = resp_print_bulk_string(ndo, bp, length);     break;
-        case REDIS_RESP_ARRAY:          ret_len = resp_print_bulk_array(ndo, bp, length);      break;
-        default:                        ret_len = resp_print_inline(ndo, bp, length);          break;
+        case RESP_SIMPLE_STRING:  ret_len = resp_print_simple_string(ndo, bp, length);   break;
+        case RESP_INTEGER:        ret_len = resp_print_integer(ndo, bp, length);         break;
+        case RESP_ERROR:          ret_len = resp_print_error(ndo, bp, length);           break;
+        case RESP_BULK_STRING:    ret_len = resp_print_bulk_string(ndo, bp, length);     break;
+        case RESP_ARRAY:          ret_len = resp_print_bulk_array(ndo, bp, length);      break;
+        default:                  ret_len = resp_print_inline(ndo, bp, length);          break;
     }
 
     TEST_RET_LEN(ret_len);
