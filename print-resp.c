@@ -134,6 +134,15 @@ static int resp_print_inline(netdissect_options *, register const u_char *, int)
 #define TEST_RET_LEN_NORETURN(rl) \
     if (rl < 0) { goto trunc; }
 
+/*
+ * RESP_PRINT_SEGMENT
+ * Prints a segment in the form of: ' "<stuff>"\n"
+ */
+#define RESP_PRINT_SEGMENT(_ndo, _bp, _len)            \
+        ND_PRINT((_ndo, " \""));                       \
+        fn_printn(_ndo, _bp, _len, _ndo->ndo_snapend); \
+        fn_print_char(_ndo, '"');
+
 void
 resp_print(netdissect_options *ndo, const u_char *bp, u_int length)
 {
@@ -217,7 +226,7 @@ resp_print_string_error_integer(netdissect_options *ndo, register const u_char *
     MOVE_FORWARD(bp_ptr, length_cur);
     len = (bp_ptr - bp);
     ND_TCHECK2(*bp, len);
-    ND_PRINT((ndo, " \"%.*s\"", len-1, bp+1));
+    RESP_PRINT_SEGMENT(ndo, bp+1, len-1);
     ret_len = len /*<1byte>+<string>*/ + 2 /*<CRLF>*/;
 
     TEST_RET_LEN(ret_len);
@@ -248,7 +257,7 @@ resp_print_bulk_string(netdissect_options *ndo, register const u_char *bp, int l
     if (string_len > 0) {
         /* Byte string of length string_len */
         ND_TCHECK2(*bp, string_len);
-        ND_PRINT((ndo, " \"%.*s\"", string_len, bp));
+        RESP_PRINT_SEGMENT(ndo, bp, string_len);
     } else {
         switch(string_len) {
             case 0: resp_print_empty(ndo); break;
@@ -338,9 +347,7 @@ resp_print_inline(netdissect_options *ndo, register const u_char *bp, int length
     MOVE_FORWARD_CR_OR_LF(bp_ptr, length_cur);
     len = (bp_ptr - bp);
     ND_TCHECK2(*bp, len);
-    ND_PRINT((ndo, " \""));
-    fn_printn(ndo, bp, len, ndo->ndo_snapend);
-    fn_print_char(ndo, '"');
+    RESP_PRINT_SEGMENT(ndo, bp, len);
     CONSUME_CR_OR_LF(bp_ptr, length_cur);
 
     TEST_RET_LEN(length - length_cur);
