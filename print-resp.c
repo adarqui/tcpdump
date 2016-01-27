@@ -353,6 +353,5 @@ resp_print_inline(netdissect_options *ndo, register const u_char *bp, int length
     TEST_RET_LEN(length - length_cur);
 
 trunc:
-    resp_print_invalid(ndo);
     return (-1);
 }
