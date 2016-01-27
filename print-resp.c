@@ -158,7 +158,7 @@ resp_print(netdissect_options *ndo, const u_char *bp, u_int length)
          * For example, multiple operations can be pipelined within the same string:
          * "*2\r\n\$4\r\nINCR\r\n\$1\r\nz\r\n*2\r\n\$4\r\nINCR\r\n\$1\r\nz\r\n*2\r\n\$4\r\nINCR\r\n\$1\r\nz\r\n"
          * or
-         * "PING\r\nPING\r\nPING\r\n"*
+         * "PING\r\nPING\r\nPING\r\n"
          * In order to handle this case, we must try and parse 'bp' until
          * 'length' bytes have been processed or we reach a trunc condition.
          */
