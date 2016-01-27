@@ -85,7 +85,7 @@ static int resp_print_inline(netdissect_options *, register const u_char *, int)
  * If we exceed, jump to trunc.
  */
 #define MOVE_FORWARD_CR_OR_LF(ptr, len) \
-    while(*ptr != '\r' && *ptr != '\n') { ND_TCHECK(*ptr);  ptr++; len--; }
+    while(*ptr != '\r' && *ptr != '\n') { ND_TCHECK(*ptr); ptr++; len--; }
 
 /*
  * CONSUME_CR_OR_LF
